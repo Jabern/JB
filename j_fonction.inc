@@ -29,10 +29,20 @@
 	native banEx(playerid, raison[])
 	native SlapEx(playerid, raison[])
 	native KickEx(playerid, raison[])
-	native FreezePlayerEx(playerid , temps = 5000) // le temp par default est 5 seconde
+	native FreezePlayerEx(playerid , temps = 5000) // le temp par default est 5 seconde , si le temp est a -1 le joueur sera freeze indefiniment
+	native ToggleFps(playerid, toggle) // toggle peut etre 0 ou 1 | 1 = Oui | 0 = Non
 
 */
+/***** Variable ****/
+// System de First view
+new FirstPerson[MAX_PLAYERS]; 
+new FirstPersonObject[MAX_PLAYERS]; 
+new bool:FPS[MAX_PLAYERS]; 
 
+/***** Forward *****/
+forward OnPlayerUnfreeze(playerid);
+
+/**** Fonctions ****/
 stock GiveHealth(playerid,Float:Health)
 {
 	new Float:health; GetPlayerHealth(playerid,health);
@@ -239,7 +249,7 @@ stock FreezePlayerEx(playerid, temps = 5000)
 		if(temps == -1)
 		{
 		TogglePlayerControllable(playerid, false);
-		SendClientMessage(playerid, 0xFF0000AA,"[Admin]{FFFFFF}Vous avez étais Freeze jusqu'a nouvelle ordre" )
+		SendClientMessage(playerid, 0xFF0000AA,"[Admin]{FFFFFF}Vous avez étais Freeze jusqu'a nouvelle ordre" );
 		}
 		else if(temps != -1)
 		{
@@ -251,8 +261,28 @@ stock FreezePlayerEx(playerid, temps = 5000)
 		}
         return 1;
 }
-
-forward OnPlayerUnfreeze(playerid);
+ 
+stock ToggleFps(playerid, toggle)  
+{ 
+	switch(toggle){
+	case 1:
+	{
+    FirstPersonObject[playerid] = CreateObject(19300, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); 
+    AttachObjectToPlayer(FirstPersonObject[playerid],playerid, 0.0, 0.12, 0.7, 0.0, 0.0, 0.0);
+    AttachCameraToObject(playerid, FirstPersonObject[playerid]);
+    FirstPerson[playerid] = 1; 
+    CallLocalFunction("OnPlayerHaveFirstPerson", "i", playerid);} 
+	case 0:
+	{
+    SetCameraBehindPlayer(playerid);
+    DestroyObject(FirstPersonObject[playerid]);
+    FirstPerson[playerid] = 0;
+    CallLocalFunction("OnPlayerDoNotHaveFirstPerson", "i", playerid);}
+	} 
+    return 1; 
+} 
+ 
+/**** CallBack ****/
 
 public OnPlayerUnfreeze(playerid)
 {
