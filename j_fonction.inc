@@ -28,13 +28,15 @@
 	native vehicle_unlock(vehicleid)
 	native banEx(playerid, raison[])
 	native SlapEx(playerid, raison[])
+	native KickEx(playerid, raison[])
+	native FreezePlayerEx(playerid , temps = 5000) // le temp par default est 5 seconde
 
 */
 
 stock GiveHealth(playerid,Float:Health)
 {
 	new Float:health; GetPlayerHealth(playerid,health);
-	SetPlayerHealth(playerid,health+Health);
+	return SetPlayerHealth(playerid,health+Health);
 }
 
 stock ClearChatForAll() 
@@ -43,9 +45,10 @@ stock ClearChatForAll()
 	{
     SendClientMessageToAll(0xFFFFFFAA," "); 
 	}
+	return 1;
 }
 
-stock GetPlayerFPS(playerid)
+/*stock GetPlayerFPS(playerid)
 {
 	SetPVarInt(playerid, "DrunkL", GetPlayerDrunkLevel(playerid));
  	if(GetPVarInt(playerid, "DrunkL") < 100) SetPlayerDrunkLevel(playerid, 2000);
@@ -61,6 +64,36 @@ stock GetPlayerFPS(playerid)
 			}
 		}
   	return 0;
+}*/
+
+stock GetPlayerFPS(playerid)
+{
+	new pDrunkLevelLast[MAX_PLAYERS];
+	new pFPS[MAX_PLAYERS];
+	new drunknew;
+	
+	drunknew = GetPlayerDrunkLevel(playerid);
+	pDrunkLevelLast[playerid]= 0;
+	pFPS[playerid]= 0;
+	
+	if (drunknew < 100)
+	{ 
+		SetPlayerDrunkLevel(playerid, 2000);
+	} 
+	else 
+	{	
+		if (pDrunkLevelLast[playerid] != drunknew) {
+			
+			new wfps = pDrunkLevelLast[playerid] - drunknew;
+			
+			if ((wfps > 0) && (wfps < 200))
+				pFPS[playerid] = wfps;
+			
+			pDrunkLevelLast[playerid] = drunknew;
+		}
+		
+	}
+	return pFPS;
 }
 
 stock GetName(playerid)
@@ -185,9 +218,44 @@ stock banEx(playerid, raison[])
 	if(!IsPlayerConnected(playerid)) return 0;
 	
 	new tmp[128];
-	format(tmp, 128, "[Serveur] %s a etait ban du serveur (Raison: %s)", GetName(playerid), raison);
+	format(tmp, 128, "[Serveur] {FFFFFF}%s a etait ban du serveur (Raison: %s)", GetName(playerid), raison);
 	SendClientMessageToAll(0xFF0000AA, tmp);
 	
-	Ban(playerid);
+	return Ban(playerid);
+}
+
+stock KickEx(playerid, raison[])
+{
+	if(!IsPlayerConnected(playerid)){ SendClientMessage(playerid, 0xFF0000AA,"Le Joueur specifier n'existe pas"); return 0;}
+
+	new tmp[128];
+	format(tmp, 128, "[Serveur]{FFFFFF} %s a etait Kick du serveur (Raison: %s)", GetName(playerid), raison);
+	SendClientMessageToAll(0xFF0000AA, tmp);	
+	return Kick(playerid);
+}
+
+stock FreezePlayerEx(playerid, temps = 5000)
+{
+		if(temps == -1)
+		{
+		TogglePlayerControllable(playerid, false);
+		SendClientMessage(playerid, 0xFF0000AA,"[Admin]{FFFFFF}Vous avez étais Freeze jusqu'a nouvelle ordre" )
+		}
+		else if(temps != -1)
+		{
+		new tmp[128];
+		format(tmp, 128,"[Admin]{FFFFFF}Vous avez étais Freeze pour %s seconde", temps);
+		SendClientMessage(playerid, 0xFF0000AA, tmp);
+        TogglePlayerControllable(playerid, false);
+        SetTimerEx("OnPlayerUnfreeze", temps, false, "i", playerid);
+		}
+        return 1;
+}
+
+forward OnPlayerUnfreeze(playerid);
+
+public OnPlayerUnfreeze(playerid)
+{
+	TogglePlayerControllable(playerid, true);
 	return 1;
 }
